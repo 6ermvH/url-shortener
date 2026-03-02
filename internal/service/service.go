@@ -35,7 +35,8 @@ func New(repo repository.Repository) *Service {
 }
 
 func (s *Service) Shorten(ctx context.Context, originalURL string) (string, error) {
-	if err := validateURL(originalURL); err != nil {
+	err := validateURL(originalURL)
+	if err != nil {
 		return "", err
 	}
 
@@ -49,6 +50,7 @@ func (s *Service) Shorten(ctx context.Context, originalURL string) (string, erro
 		if errors.Is(err, repository.ErrConflict) {
 			continue
 		}
+
 		if err != nil {
 			return "", fmt.Errorf("save url mapping: %w", err)
 		}
@@ -62,6 +64,7 @@ func (s *Service) Resolve(ctx context.Context, short string) (string, error) {
 	if errors.Is(err, repository.ErrNotFound) {
 		return "", ErrNotFound
 	}
+
 	if err != nil {
 		return "", fmt.Errorf("get by short: %w", err)
 	}
