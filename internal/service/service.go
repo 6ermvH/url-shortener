@@ -34,42 +34,42 @@ func New(repo repository.Repository) *Service {
 	}
 }
 
-func (s *Service) Shorten(ctx context.Context, originalURL string) (string, error) {
-	err := validateURL(originalURL)
+func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (ShortenResponse, error) {
+	err := validateURL(req.URL)
 	if err != nil {
-		return "", err
+		return ShortenResponse{}, err
 	}
 
 	for attempt := 0; ; attempt++ {
-		short := s.generateShort(originalURL, attempt)
+		short := s.generateShort(req.URL, attempt)
 
 		err := s.repo.Save(ctx, repository.URLMapping{
 			ShortURL:    short,
-			OriginalURL: originalURL,
+			OriginalURL: req.URL,
 		})
 		if errors.Is(err, repository.ErrConflict) {
 			continue
 		}
 
 		if err != nil {
-			return "", fmt.Errorf("save url mapping: %w", err)
+			return ShortenResponse{}, fmt.Errorf("save url mapping: %w", err)
 		}
 
-		return short, nil
+		return ShortenResponse{ShortURL: short}, nil
 	}
 }
 
-func (s *Service) Resolve(ctx context.Context, short string) (string, error) {
+func (s *Service) Resolve(ctx context.Context, short string) (ResolveResponse, error) {
 	mapping, err := s.repo.GetByShort(ctx, short)
 	if errors.Is(err, repository.ErrNotFound) {
-		return "", ErrNotFound
+		return ResolveResponse{}, ErrNotFound
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("get by short: %w", err)
+		return ResolveResponse{}, fmt.Errorf("get by short: %w", err)
 	}
 
-	return mapping.OriginalURL, nil
+	return ResolveResponse{OriginalURL: mapping.OriginalURL}, nil
 }
 
 func (s *Service) generateShort(rawURL string, attempt int) string {
