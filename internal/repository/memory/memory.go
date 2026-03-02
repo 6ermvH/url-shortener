@@ -37,6 +37,10 @@ func (r *Repository) Save(_ context.Context, m repository.URLMapping) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	if existing, ok := r.byShort[m.ShortURL]; ok && existing != m.OriginalURL {
+		return repository.ErrConflict
+	}
+
 	r.byShort[m.ShortURL] = m.OriginalURL
 
 	return nil
