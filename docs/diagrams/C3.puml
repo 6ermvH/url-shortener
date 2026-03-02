@@ -1,0 +1,30 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C3 Component: URL Shortener — HTTP API Service
+
+Container_Boundary(api, "HTTP API Service") {
+
+    Component(config, "Config", "internal/config", "Конфигурация приложения")
+
+    Component(handler, "HTTP Handler", "internal/handler", "Обработка входящих HTTP-запросов")
+
+    Component(base63, "Base63 Encoder", "pkg/base63", "Кодирование байт в алфавит из 63 допустимых символов")
+
+    Component(service, "Shortener Service", "internal/service", "Бизнес-логика сокращения и разрешения ссылок")
+
+    Component(repo_iface, "Repository Interface", "internal/repository", "Контракт для работы с хранилищем")
+
+    Component(pg_repo, "PostgreSQL Repository", "internal/repository/postgres", "Реализация хранилища на PostgreSQL")
+
+    Component(mem_repo, "In-Memory Repository", "internal/repository/memory", "Реализация хранилища в памяти")
+}
+
+Rel_D(config, handler, "Конфигурирует")
+Rel_D(handler, service, "Вызывает бизнес-логику")
+Rel_R(service, base63, "Генерация короткой ссылки")
+Rel_D(service, repo_iface, "Сохранение и чтение ссылок")
+Rel_D(repo_iface, pg_repo, "Получение/Вставка пары ссылок")
+Rel_D(repo_iface, mem_repo, "Получение/Вставка пары ссылок")
+
+@enduml
