@@ -13,6 +13,7 @@ func NewEncoding(alphabet string, length int) *Encoding {
 	if len(alphabet) != int(base) {
 		panic("base63: alphabet must be exactly 63 characters")
 	}
+
 	return &Encoding{
 		alphabet: alphabet,
 		length:   length,
@@ -34,5 +35,6 @@ func (e *Encoding) Encode(dst, src []byte) {
 func (e *Encoding) EncodeToString(src []byte) string {
 	dst := make([]byte, e.length)
 	e.Encode(dst, src)
+
 	return string(dst)
 }
