@@ -1,4 +1,4 @@
-package handler
+package service
 
 type ShortenRequest struct {
 	URL string `json:"url"`
