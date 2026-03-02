@@ -17,7 +17,8 @@ func New(svc *service.Service) *Handler {
 	return &Handler{svc: svc}
 }
 
-func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) { //nolint:varnamelen
+//nolint:varnamelen
+func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	var req service.ShortenRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -43,7 +44,8 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) { //nolint:var
 	writeJSON(w, http.StatusCreated, resp)
 }
 
-func (h *Handler) Resolve(w http.ResponseWriter, r *http.Request) { //nolint:varnamelen
+//nolint:varnamelen
+func (h *Handler) Resolve(w http.ResponseWriter, r *http.Request) {
 	short := r.PathValue("short")
 
 	resp, err := h.svc.Resolve(r.Context(), short)
@@ -62,7 +64,8 @@ func (h *Handler) Resolve(w http.ResponseWriter, r *http.Request) { //nolint:var
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func writeJSON(w http.ResponseWriter, status int, v any) { //nolint:varnamelen
+//nolint:varnamelen
+func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
@@ -72,6 +75,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) { //nolint:varnamelen
 	}
 }
 
-func writeError(w http.ResponseWriter, status int, msg string) { //nolint:varnamelen
+//nolint:varnamelen
+func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
 }
