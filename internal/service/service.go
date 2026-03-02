@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/6ermvH/url-shortener/internal/handler"
 	"github.com/6ermvH/url-shortener/internal/repository"
@@ -14,6 +16,8 @@ const (
 	shortURLLen = 10
 	alphabet    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
 )
+
+var ErrNotFound = errors.New("url not found")
 
 type Service struct {
 	repo     repository.Repository
@@ -31,21 +35,36 @@ func (s *Service) Shorten(
 	ctx context.Context,
 	req handler.ShortenRequest,
 ) (handler.ShortenResponse, error) {
-	short := s.generateShort(req.URL, 0)
-
-	err := s.repo.Save(ctx, repository.URLMapping{
-		ShortURL:    short,
-		OriginalURL: req.URL,
-	})
+	err := validateURL(req.URL)
 	if err != nil {
-		return handler.ShortenResponse{}, fmt.Errorf("save url mapping: %w", err)
+		return handler.ShortenResponse{}, err
 	}
 
-	return handler.ShortenResponse{ShortURL: short}, nil
+	for attempt := 0; ; attempt++ {
+		short := s.generateShort(req.URL, attempt)
+
+		err := s.repo.Save(ctx, repository.URLMapping{
+			ShortURL:    short,
+			OriginalURL: req.URL,
+		})
+		if errors.Is(err, repository.ErrConflict) {
+			continue
+		}
+
+		if err != nil {
+			return handler.ShortenResponse{}, fmt.Errorf("save url mapping: %w", err)
+		}
+
+		return handler.ShortenResponse{ShortURL: short}, nil
+	}
 }
 
 func (s *Service) Resolve(ctx context.Context, short string) (handler.ResolveResponse, error) {
 	m, err := s.repo.GetByShort(ctx, short)
+	if errors.Is(err, repository.ErrNotFound) {
+		return handler.ResolveResponse{}, ErrNotFound
+	}
+
 	if err != nil {
 		return handler.ResolveResponse{}, fmt.Errorf("get by short: %w", err)
 	}
@@ -53,13 +72,26 @@ func (s *Service) Resolve(ctx context.Context, short string) (handler.ResolveRes
 	return handler.ResolveResponse{OriginalURL: m.OriginalURL}, nil
 }
 
-func (s *Service) generateShort(url string, attempt int) string {
-	input := url
+func (s *Service) generateShort(rawURL string, attempt int) string {
+	input := rawURL
 	if attempt > 0 {
-		input = fmt.Sprintf("%s#%d", url, attempt)
+		input = fmt.Sprintf("%s#%d", rawURL, attempt)
 	}
 
 	hash := sha256.Sum256([]byte(input))
 
 	return s.encoding.EncodeToString(hash[:8])
+}
+
+func validateURL(rawURL string) error {
+	if rawURL == "" {
+		return errors.New("url is required")
+	}
+
+	u, err := url.ParseRequestURI(rawURL)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return fmt.Errorf("invalid url: %q", rawURL)
+	}
+
+	return nil
 }
