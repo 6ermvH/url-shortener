@@ -1,19 +1,21 @@
 package base63
 
-const StdAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
-
-var StdEncoding = NewEncoding(StdAlphabet, 10)
+const (
+	base = uint64(63)
+)
 
 type Encoding struct {
 	alphabet string
-	base     uint64
 	length   int
 }
 
 func NewEncoding(alphabet string, length int) *Encoding {
+	if len(alphabet) != int(base) {
+		panic("base63: alphabet must be exactly 63 characters")
+	}
+
 	return &Encoding{
 		alphabet: alphabet,
-		base:     uint64(len(alphabet)),
 		length:   length,
 	}
 }
@@ -21,8 +23,9 @@ func NewEncoding(alphabet string, length int) *Encoding {
 func (e *Encoding) Encode(num uint64) string {
 	result := make([]byte, e.length)
 	for i := range e.length {
-		result[i] = e.alphabet[num%e.base]
-		num /= e.base
+		result[i] = e.alphabet[num%base]
+		num /= base
 	}
+
 	return string(result)
 }
