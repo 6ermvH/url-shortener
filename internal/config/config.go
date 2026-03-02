@@ -14,14 +14,19 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	cfg := &Config{}
+	cfg := &Config{
+		Addr:    "",
+		Storage: "",
+		DSN:     "",
+	}
 
 	flag.StringVar(&cfg.Addr, "addr", ":8080", "server address")
 	flag.StringVar(&cfg.Storage, "storage", "memory", "storage type: postgres|memory")
 	flag.StringVar(&cfg.DSN, "dsn", "", "postgres DSN (required when storage=postgres)")
 	flag.Parse()
 
-	if err := validator.New().Struct(cfg); err != nil {
+	err := validator.New().Struct(cfg)
+	if err != nil {
 		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
