@@ -16,6 +16,8 @@ var queryGetByShort string
 //go:embed queries/save.sql
 var querySave string
 
+var _ repository.Repository = (*Repository)(nil)
+
 type Repository struct {
 	db *sql.DB
 }

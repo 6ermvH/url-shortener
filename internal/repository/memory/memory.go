@@ -7,6 +7,8 @@ import (
 	"github.com/6ermvH/url-shortener/internal/repository"
 )
 
+var _ repository.Repository = (*Repository)(nil)
+
 type Repository struct {
 	mu      sync.RWMutex
 	byShort map[string]string
