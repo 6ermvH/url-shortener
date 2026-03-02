@@ -33,11 +33,15 @@ func (r *Repository) GetByShort(_ context.Context, short string) (repository.URL
 	return repository.URLMapping{ShortURL: short, OriginalURL: original}, nil
 }
 
-func (r *Repository) Save(_ context.Context, m repository.URLMapping) error {
+func (r *Repository) Save(_ context.Context, mapping repository.URLMapping) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.byShort[m.ShortURL] = m.OriginalURL
+	if existing, ok := r.byShort[mapping.ShortURL]; ok && existing != mapping.OriginalURL {
+		return repository.ErrConflict
+	}
+
+	r.byShort[mapping.ShortURL] = mapping.OriginalURL
 
 	return nil
 }
