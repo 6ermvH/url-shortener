@@ -5,9 +5,9 @@ type ShortenRequest struct {
 }
 
 type ShortenResponse struct {
-	ShortURL string `json:"short_url"`
+	ShortURL string `json:"shortUrl"`
 }
 
 type ResolveResponse struct {
-	OriginalURL string `json:"original_url"`
+	OriginalURL string `json:"originalUrl"`
 }
