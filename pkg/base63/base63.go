@@ -1,20 +1,28 @@
 package base63
 
-import "encoding/binary"
+const StdAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
 
-const (
-	alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
-	base     = uint64(len(alphabet))
-)
+var StdEncoding = NewEncoding(StdAlphabet, 10)
 
-func Encode(b [8]byte, length int) string {
-	num := binary.BigEndian.Uint64(b[:])
+type Encoding struct {
+	alphabet string
+	base     uint64
+	length   int
+}
 
-	result := make([]byte, length)
-	for i := range length {
-		result[i] = alphabet[num%base]
-		num /= base
+func NewEncoding(alphabet string, length int) *Encoding {
+	return &Encoding{
+		alphabet: alphabet,
+		base:     uint64(len(alphabet)),
+		length:   length,
 	}
+}
 
+func (e *Encoding) Encode(num uint64) string {
+	result := make([]byte, e.length)
+	for i := range e.length {
+		result[i] = e.alphabet[num%e.base]
+		num /= e.base
+	}
 	return string(result)
 }
