@@ -1,8 +1,6 @@
 version: "2"
 
 run:
-  build-tags:
-
   timeout: 5m
   tests: true
 
