@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 
+	"github.com/6ermvH/url-shortener/cmd/internal/migrator"
 	"github.com/6ermvH/url-shortener/internal/config"
 	"github.com/6ermvH/url-shortener/internal/handler"
 	"github.com/6ermvH/url-shortener/internal/repository"
@@ -77,6 +78,11 @@ func newRepository(cfg *config.Config) (repository.Repository, error) {
 		pingErr := sqlDB.PingContext(context.Background())
 		if pingErr != nil {
 			return nil, fmt.Errorf("ping db: %w", pingErr)
+		}
+
+		migrateErr := migrator.Run(sqlDB)
+		if migrateErr != nil {
+			return nil, fmt.Errorf("run migrations: %w", migrateErr)
 		}
 
 		return postgres.New(sqlDB), nil
