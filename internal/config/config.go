@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -14,15 +15,15 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	cfg := &Config{
-		Addr:    "",
-		Storage: "",
-		DSN:     "",
+	cfg := &Config{ //nolint:exhaustruct
+		Addr:    envOrDefault("ADDR", ":8080"),
+		Storage: envOrDefault("STORAGE", "memory"),
+		DSN:     envOrDefault("DSN", ""),
 	}
 
-	flag.StringVar(&cfg.Addr, "addr", ":8080", "server address")
-	flag.StringVar(&cfg.Storage, "storage", "memory", "storage type: postgres|memory")
-	flag.StringVar(&cfg.DSN, "dsn", "", "postgres DSN (required when storage=postgres)")
+	flag.StringVar(&cfg.Addr, "addr", cfg.Addr, "server address")
+	flag.StringVar(&cfg.Storage, "storage", cfg.Storage, "storage type: postgres|memory")
+	flag.StringVar(&cfg.DSN, "dsn", cfg.DSN, "postgres DSN (required when storage=postgres)")
 	flag.Parse()
 
 	err := validator.New().Struct(cfg)
@@ -31,4 +32,12 @@ func Load() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func envOrDefault(key, defaultVal string) string {
+	if val := os.Getenv(key); val != "" {
+		return val
+	}
+
+	return defaultVal
 }
