@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 
-
 	"github.com/6ermvH/url-shortener/internal/repository"
 )
 
