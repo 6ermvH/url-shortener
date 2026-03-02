@@ -8,12 +8,13 @@ import (
 )
 
 type Repository struct {
-	mu       sync.RWMutex
-	byShort  map[string]string
+	mu      sync.RWMutex
+	byShort map[string]string
 }
 
 func New() *Repository {
 	return &Repository{
+		mu:      sync.RWMutex{},
 		byShort: make(map[string]string),
 	}
 }
@@ -22,7 +23,7 @@ func (r *Repository) GetByShort(_ context.Context, short string) (repository.URL
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	original, ok := r.byShort[string(short)]
+	original, ok := r.byShort[short]
 	if !ok {
 		return repository.URLMapping{}, repository.ErrNotFound
 	}
