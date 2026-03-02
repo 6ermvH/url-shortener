@@ -17,7 +17,11 @@ const (
 	alphabet    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
 )
 
-var ErrNotFound = errors.New("url not found")
+var (
+	ErrNotFound   = errors.New("url not found")
+	ErrEmptyURL   = errors.New("url is required")
+	ErrInvalidURL = errors.New("invalid url")
+)
 
 type Service struct {
 	repo     repository.Repository
@@ -60,7 +64,7 @@ func (s *Service) Shorten(
 }
 
 func (s *Service) Resolve(ctx context.Context, short string) (handler.ResolveResponse, error) {
-	m, err := s.repo.GetByShort(ctx, short)
+	mapping, err := s.repo.GetByShort(ctx, short)
 	if errors.Is(err, repository.ErrNotFound) {
 		return handler.ResolveResponse{}, ErrNotFound
 	}
@@ -69,7 +73,7 @@ func (s *Service) Resolve(ctx context.Context, short string) (handler.ResolveRes
 		return handler.ResolveResponse{}, fmt.Errorf("get by short: %w", err)
 	}
 
-	return handler.ResolveResponse{OriginalURL: m.OriginalURL}, nil
+	return handler.ResolveResponse{OriginalURL: mapping.OriginalURL}, nil
 }
 
 func (s *Service) generateShort(rawURL string, attempt int) string {
@@ -85,12 +89,12 @@ func (s *Service) generateShort(rawURL string, attempt int) string {
 
 func validateURL(rawURL string) error {
 	if rawURL == "" {
-		return errors.New("url is required")
+		return ErrEmptyURL
 	}
 
 	u, err := url.ParseRequestURI(rawURL)
 	if err != nil || u.Scheme == "" || u.Host == "" {
-		return fmt.Errorf("invalid url: %q", rawURL)
+		return fmt.Errorf("%w: %q", ErrInvalidURL, rawURL)
 	}
 
 	return nil
