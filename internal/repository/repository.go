@@ -3,6 +3,6 @@ package repository
 import "context"
 
 type Repository interface {
-	GetLongUrlByShortUrl(ctx context.Context, shortUrl string) (string, error)
-	UpsertUrlMapping(ctx context.Context, shortUrl, longUrl string) error
+	GetByShort(ctx context.Context, short string) (URLMapping, error)
+	Save(ctx context.Context, urlMap URLMapping) error
 }
