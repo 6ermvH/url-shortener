@@ -12,7 +12,7 @@ import (
 	"github.com/6ermvH/url-shortener/migrations"
 )
 
-func Run(db *sql.DB, version uint) error { //nolint:varnamelen
+func Run(db *sql.DB, version uint) error {
 	sourceDriver, err := iofs.New(migrations.FS, ".")
 	if err != nil {
 		return fmt.Errorf("create migration source: %w", err)
