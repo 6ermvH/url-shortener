@@ -3,6 +3,8 @@ version: "2"
 run:
   timeout: 5m
   tests: true
+  build-tags:
+    - e2e
 
 linters:
   default: all
