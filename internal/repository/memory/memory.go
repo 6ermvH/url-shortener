@@ -16,6 +16,7 @@ type Repository struct {
 
 func New() *Repository {
 	return &Repository{
+		mu:      sync.RWMutex{},
 		byShort: make(map[string]string),
 	}
 }
