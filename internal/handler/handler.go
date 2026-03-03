@@ -17,7 +17,6 @@ func New(svc *service.Service) *Handler {
 	return &Handler{svc: svc}
 }
 
-//nolint:varnamelen
 func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	var req service.ShortenRequest
 
@@ -44,7 +43,6 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, resp)
 }
 
-//nolint:varnamelen
 func (h *Handler) Resolve(w http.ResponseWriter, r *http.Request) {
 	short := r.PathValue("short")
 
@@ -64,7 +62,6 @@ func (h *Handler) Resolve(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-//nolint:varnamelen
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -75,7 +72,6 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	}
 }
 
-//nolint:varnamelen
 func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
 }

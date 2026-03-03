@@ -16,10 +16,11 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	cfg := &Config{ //nolint:exhaustruct
-		Addr:    envOrDefault("ADDR", ":8080"),
-		Storage: envOrDefault("STORAGE", "memory"),
-		DSN:     envOrDefault("DSN", ""),
+	cfg := &Config{
+		Addr:           envOrDefault("ADDR", ":8080"),
+		Storage:        envOrDefault("STORAGE", "memory"),
+		DSN:            envOrDefault("DSN", ""),
+		MigrateVersion: 0,
 	}
 
 	flag.StringVar(&cfg.Addr, "addr", cfg.Addr, "server address")
