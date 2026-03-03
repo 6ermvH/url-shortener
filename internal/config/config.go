@@ -9,9 +9,10 @@ import (
 )
 
 type Config struct {
-	Addr    string `validate:"required,hostname_port"`
-	Storage string `validate:"required,oneof=postgres memory"`
-	DSN     string `validate:"required_if=Storage postgres"`
+	Addr           string `validate:"required,hostname_port"`
+	Storage        string `validate:"required,oneof=postgres memory"`
+	DSN            string `validate:"required_if=Storage postgres"`
+	MigrateVersion uint   `validate:"min=0"`
 }
 
 func Load() (*Config, error) {
@@ -24,6 +25,12 @@ func Load() (*Config, error) {
 	flag.StringVar(&cfg.Addr, "addr", cfg.Addr, "server address")
 	flag.StringVar(&cfg.Storage, "storage", cfg.Storage, "storage type: postgres|memory")
 	flag.StringVar(&cfg.DSN, "dsn", cfg.DSN, "postgres DSN (required when storage=postgres)")
+	flag.UintVar(
+		&cfg.MigrateVersion,
+		"migrate-version",
+		0,
+		"migrate up to specific version (0 = all)",
+	)
 	flag.Parse()
 
 	err := validator.New().Struct(cfg)
