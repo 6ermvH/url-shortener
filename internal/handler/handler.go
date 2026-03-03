@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/6ermvH/url-shortener/internal/service"
@@ -17,10 +17,11 @@ type Service interface {
 
 type Handler struct {
 	svc Service
+	log *slog.Logger
 }
 
-func New(svc Service) *Handler {
-	return &Handler{svc: svc}
+func New(svc Service, log *slog.Logger) *Handler {
+	return &Handler{svc: svc, log: log}
 }
 
 func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
@@ -28,25 +29,26 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		h.writeError(r.Context(), w, http.StatusBadRequest, "invalid request body")
 
 		return
 	}
 
 	result, err := h.svc.Shorten(r.Context(), service.ShortenInput{URL: req.URL})
 	if errors.Is(err, service.ErrEmptyURL) || errors.Is(err, service.ErrInvalidURL) {
-		writeError(w, http.StatusBadRequest, err.Error())
+		h.writeError(r.Context(), w, http.StatusBadRequest, err.Error())
 
 		return
 	}
 
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		h.log.ErrorContext(r.Context(), "shorten url", "err", err)
+		h.writeError(r.Context(), w, http.StatusInternalServerError, "internal server error")
 
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, shortenResponse{ShortURL: result.ShortURL})
+	h.writeJSON(r.Context(), w, http.StatusCreated, shortenResponse{ShortURL: result.ShortURL})
 }
 
 func (h *Handler) Resolve(w http.ResponseWriter, r *http.Request) {
@@ -54,30 +56,30 @@ func (h *Handler) Resolve(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.svc.Resolve(r.Context(), short)
 	if errors.Is(err, service.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "url not found")
+		h.writeError(r.Context(), w, http.StatusNotFound, "url not found")
 
 		return
 	}
 
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		h.log.ErrorContext(r.Context(), "resolve url", "err", err)
+		h.writeError(r.Context(), w, http.StatusInternalServerError, "internal server error")
 
 		return
 	}
 
-	writeJSON(w, http.StatusOK, resolveResponse{OriginalURL: result.OriginalURL})
+	h.writeJSON(r.Context(), w, http.StatusOK, resolveResponse{OriginalURL: result.OriginalURL})
 }
 
-func writeJSON(w http.ResponseWriter, status int, v any) {
+func (h *Handler) writeJSON(ctx context.Context, w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	encodeErr := json.NewEncoder(w).Encode(v)
-	if encodeErr != nil {
-		log.Printf("writeJSON: %v", encodeErr)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		h.log.ErrorContext(ctx, "encode response", "err", err)
 	}
 }
 
-func writeError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, errorResponse{Error: msg})
+func (h *Handler) writeError(ctx context.Context, w http.ResponseWriter, status int, msg string) {
+	h.writeJSON(ctx, w, status, errorResponse{Error: msg})
 }
