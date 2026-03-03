@@ -13,6 +13,8 @@ import (
 	"github.com/6ermvH/url-shortener/internal/service"
 )
 
+var errTest = errors.New("db error")
+
 func TestShorten_Success(t *testing.T) {
 	t.Parallel()
 
@@ -25,7 +27,10 @@ func TestShorten_Success(t *testing.T) {
 
 	svc := service.New(repo)
 
-	resp, err := svc.Shorten(context.Background(), service.ShortenRequest{URL: "https://example.com"})
+	resp, err := svc.Shorten(
+		context.Background(),
+		service.ShortenRequest{URL: "https://example.com"},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, resp.ShortURL, 10)
@@ -44,10 +49,16 @@ func TestShorten_Idempotent(t *testing.T) {
 
 	svc := service.New(repo)
 
-	resp1, err := svc.Shorten(context.Background(), service.ShortenRequest{URL: "https://example.com"})
+	resp1, err := svc.Shorten(
+		context.Background(),
+		service.ShortenRequest{URL: "https://example.com"},
+	)
 	require.NoError(t, err)
 
-	resp2, err := svc.Shorten(context.Background(), service.ShortenRequest{URL: "https://example.com"})
+	resp2, err := svc.Shorten(
+		context.Background(),
+		service.ShortenRequest{URL: "https://example.com"},
+	)
 	require.NoError(t, err)
 
 	require.Equal(t, resp1.ShortURL, resp2.ShortURL)
@@ -73,13 +84,23 @@ func TestShorten_InvalidURL(t *testing.T) {
 	require.ErrorIs(t, err, service.ErrInvalidURL)
 }
 
+func TestShorten_InvalidScheme(t *testing.T) {
+	t.Parallel()
+
+	svc := service.New(nil)
+
+	_, err := svc.Shorten(context.Background(), service.ShortenRequest{URL: "ht://example.com"})
+
+	require.ErrorIs(t, err, service.ErrInvalidURL)
+}
+
 func TestShorten_RepoError(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
 	repo := mocks.NewMockRepository(ctrl)
 
-	repoErr := errors.New("db error")
+	repoErr := errTest
 	repo.EXPECT().
 		Save(gomock.Any(), gomock.Any()).
 		Return(repoErr)
@@ -117,7 +138,7 @@ func TestResolve_NotFound(t *testing.T) {
 
 	repo.EXPECT().
 		GetByShort(gomock.Any(), "notexists").
-		Return(repository.URLMapping{}, repository.ErrNotFound)
+		Return(repository.URLMapping{ShortURL: "", OriginalURL: ""}, repository.ErrNotFound)
 
 	svc := service.New(repo)
 
@@ -132,10 +153,10 @@ func TestResolve_RepoError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	repo := mocks.NewMockRepository(ctrl)
 
-	repoErr := errors.New("db error")
+	repoErr := errTest
 	repo.EXPECT().
 		GetByShort(gomock.Any(), "abc123").
-		Return(repository.URLMapping{}, repoErr)
+		Return(repository.URLMapping{ShortURL: "", OriginalURL: ""}, repoErr)
 
 	svc := service.New(repo)
 

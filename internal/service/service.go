@@ -35,16 +35,18 @@ func New(repo repository.Repository) *Service {
 }
 
 func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (ShortenResponse, error) {
-	if err := validateURL(req.URL); err != nil {
+	err := validateURL(req.URL)
+	if err != nil {
 		return ShortenResponse{}, err
 	}
 
 	short := s.generateShort(req.URL)
 
-	if err := s.repo.Save(ctx, repository.URLMapping{
+	err = s.repo.Save(ctx, repository.URLMapping{
 		ShortURL:    short,
 		OriginalURL: req.URL,
-	}); err != nil {
+	})
+	if err != nil {
 		return ShortenResponse{}, fmt.Errorf("save url mapping: %w", err)
 	}
 
@@ -76,8 +78,12 @@ func validateURL(rawURL string) error {
 	}
 
 	u, err := url.ParseRequestURI(rawURL)
-	if err != nil || u.Scheme == "" || u.Host == "" {
+	if err != nil || u.Host == "" {
 		return fmt.Errorf("%w: %q", ErrInvalidURL, rawURL)
+	}
+
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("%w: scheme must be http or https", ErrInvalidURL)
 	}
 
 	return nil
