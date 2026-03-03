@@ -1,13 +1,13 @@
 package service
 
-type ShortenRequest struct {
-	URL string `json:"url"`
+type ShortenInput struct {
+	URL string
 }
 
-type ShortenResponse struct {
-	ShortURL string `json:"shortUrl"`
+type ShortenResult struct {
+	ShortURL string
 }
 
-type ResolveResponse struct {
-	OriginalURL string `json:"originalUrl"`
+type ResolveResult struct {
+	OriginalURL string
 }
