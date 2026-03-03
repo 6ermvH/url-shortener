@@ -25,12 +25,12 @@ func Load() (*Config, error) {
 
 	flag.StringVar(&cfg.Addr, "addr", cfg.Addr, "server address")
 	flag.StringVar(&cfg.Storage, "storage", cfg.Storage, "storage type: postgres|memory")
-	flag.StringVar(&cfg.DSN, "dsn", cfg.DSN, "postgres DSN (required when storage=postgres)")
+	flag.StringVar(&cfg.DSN, "dsn", cfg.DSN, "postgres DSN")
 	flag.UintVar(
 		&cfg.MigrateVersion,
 		"migrate-version",
 		0,
-		"migrate up to specific version (0 = all)",
+		"migrate up to current version (0 = all)",
 	)
 	flag.Parse()
 
