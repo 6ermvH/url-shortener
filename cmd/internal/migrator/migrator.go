@@ -12,13 +12,12 @@ import (
 	"github.com/6ermvH/url-shortener/migrations"
 )
 
-func Run(db *sql.DB) error { // nolint: varnamelen
+func Run(db *sql.DB, version uint) error { //nolint:varnamelen
 	sourceDriver, err := iofs.New(migrations.FS, ".")
 	if err != nil {
 		return fmt.Errorf("create migration source: %w", err)
 	}
 
-	//nolint:exhaustruct
 	dbDriver, err := pgx.WithInstance(db, &pgx.Config{})
 	if err != nil {
 		return fmt.Errorf("create migration driver: %w", err)
@@ -29,7 +28,12 @@ func Run(db *sql.DB) error { // nolint: varnamelen
 		return fmt.Errorf("create migrator: %w", err)
 	}
 
-	err = m.Up()
+	if version != 0 {
+		err = m.Migrate(version)
+	} else {
+		err = m.Up()
+	}
+
 	if errors.Is(err, migrate.ErrNoChange) {
 		return nil
 	}
