@@ -34,36 +34,36 @@ func New(repo repository.Repository) *Service {
 	}
 }
 
-func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (ShortenResponse, error) {
-	err := validateURL(req.URL)
+func (s *Service) Shorten(ctx context.Context, input ShortenInput) (ShortenResult, error) {
+	err := validateURL(input.URL)
 	if err != nil {
-		return ShortenResponse{}, err
+		return ShortenResult{}, err
 	}
 
-	short := s.generateShort(req.URL)
+	short := s.generateShort(input.URL)
 
 	err = s.repo.Save(ctx, repository.URLMapping{
 		ShortURL:    short,
-		OriginalURL: req.URL,
+		OriginalURL: input.URL,
 	})
 	if err != nil {
-		return ShortenResponse{}, fmt.Errorf("save url mapping: %w", err)
+		return ShortenResult{}, fmt.Errorf("save url mapping: %w", err)
 	}
 
-	return ShortenResponse{ShortURL: short}, nil
+	return ShortenResult{ShortURL: short}, nil
 }
 
-func (s *Service) Resolve(ctx context.Context, short string) (ResolveResponse, error) {
+func (s *Service) Resolve(ctx context.Context, short string) (ResolveResult, error) {
 	mapping, err := s.repo.GetByShort(ctx, short)
 	if errors.Is(err, repository.ErrNotFound) {
-		return ResolveResponse{}, ErrNotFound
+		return ResolveResult{}, ErrNotFound
 	}
 
 	if err != nil {
-		return ResolveResponse{}, fmt.Errorf("get by short: %w", err)
+		return ResolveResult{}, fmt.Errorf("get by short: %w", err)
 	}
 
-	return ResolveResponse{OriginalURL: mapping.OriginalURL}, nil
+	return ResolveResult{OriginalURL: mapping.OriginalURL}, nil
 }
 
 func (s *Service) generateShort(rawURL string) string {

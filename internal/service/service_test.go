@@ -28,7 +28,7 @@ func TestShorten_Success(t *testing.T) {
 
 	resp, err := svc.Shorten(
 		t.Context(),
-		service.ShortenRequest{URL: "https://example.com"},
+		service.ShortenInput{URL: "https://example.com"},
 	)
 
 	require.NoError(t, err)
@@ -50,13 +50,13 @@ func TestShorten_Idempotent(t *testing.T) {
 
 	resp1, err := svc.Shorten(
 		t.Context(),
-		service.ShortenRequest{URL: "https://example.com"},
+		service.ShortenInput{URL: "https://example.com"},
 	)
 	require.NoError(t, err)
 
 	resp2, err := svc.Shorten(
 		t.Context(),
-		service.ShortenRequest{URL: "https://example.com"},
+		service.ShortenInput{URL: "https://example.com"},
 	)
 	require.NoError(t, err)
 
@@ -68,7 +68,7 @@ func TestShorten_EmptyURL(t *testing.T) {
 
 	svc := service.New(nil)
 
-	_, err := svc.Shorten(t.Context(), service.ShortenRequest{URL: ""})
+	_, err := svc.Shorten(t.Context(), service.ShortenInput{URL: ""})
 
 	require.ErrorIs(t, err, service.ErrEmptyURL)
 }
@@ -78,7 +78,7 @@ func TestShorten_InvalidURL(t *testing.T) {
 
 	svc := service.New(nil)
 
-	_, err := svc.Shorten(t.Context(), service.ShortenRequest{URL: "not-a-url"})
+	_, err := svc.Shorten(t.Context(), service.ShortenInput{URL: "not-a-url"})
 
 	require.ErrorIs(t, err, service.ErrInvalidURL)
 }
@@ -88,7 +88,7 @@ func TestShorten_InvalidScheme(t *testing.T) {
 
 	svc := service.New(nil)
 
-	_, err := svc.Shorten(t.Context(), service.ShortenRequest{URL: "ht://example.com"})
+	_, err := svc.Shorten(t.Context(), service.ShortenInput{URL: "ht://example.com"})
 
 	require.ErrorIs(t, err, service.ErrInvalidURL)
 }
@@ -106,7 +106,7 @@ func TestShorten_RepoError(t *testing.T) {
 
 	svc := service.New(repo)
 
-	_, err := svc.Shorten(t.Context(), service.ShortenRequest{URL: "https://example.com"})
+	_, err := svc.Shorten(t.Context(), service.ShortenInput{URL: "https://example.com"})
 
 	require.ErrorIs(t, err, repoErr)
 }
