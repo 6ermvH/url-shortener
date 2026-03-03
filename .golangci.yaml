@@ -41,6 +41,9 @@ linters:
           - gosec
           - noinlineerr
           - errchkjson
+      - path: ^cmd/
+        linters:
+          - revive
 
 formatters:
   enable:
