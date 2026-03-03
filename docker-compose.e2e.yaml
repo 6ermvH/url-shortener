@@ -1,0 +1,30 @@
+name: url-shortener-e2e
+
+services:
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - STORAGE=postgres
+      - DSN=postgres://postgres:postgres@postgres:5432/url_shortener_e2e?sslmode=disable
+    ports:
+      - '127.0.0.1:8081:8080'
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/ || true" ]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: url_shortener_e2e
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 2s
+      timeout: 2s
+      retries: 10
