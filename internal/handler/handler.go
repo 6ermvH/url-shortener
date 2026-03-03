@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -9,11 +10,16 @@ import (
 	"github.com/6ermvH/url-shortener/internal/service"
 )
 
-type Handler struct {
-	svc *service.Service
+type Service interface {
+	Shorten(ctx context.Context, req service.ShortenRequest) (service.ShortenResponse, error)
+	Resolve(ctx context.Context, short string) (service.ResolveResponse, error)
 }
 
-func New(svc *service.Service) *Handler {
+type Handler struct {
+	svc Service
+}
+
+func New(svc Service) *Handler {
 	return &Handler{svc: svc}
 }
 
