@@ -35,28 +35,20 @@ func New(repo repository.Repository) *Service {
 }
 
 func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (ShortenResponse, error) {
-	err := validateURL(req.URL)
-	if err != nil {
+	if err := validateURL(req.URL); err != nil {
 		return ShortenResponse{}, err
 	}
 
-	for attempt := 0; ; attempt++ {
-		short := s.generateShort(req.URL, attempt)
+	short := s.generateShort(req.URL)
 
-		err := s.repo.Save(ctx, repository.URLMapping{
-			ShortURL:    short,
-			OriginalURL: req.URL,
-		})
-		if errors.Is(err, repository.ErrConflict) {
-			continue
-		}
-
-		if err != nil {
-			return ShortenResponse{}, fmt.Errorf("save url mapping: %w", err)
-		}
-
-		return ShortenResponse{ShortURL: short}, nil
+	if err := s.repo.Save(ctx, repository.URLMapping{
+		ShortURL:    short,
+		OriginalURL: req.URL,
+	}); err != nil {
+		return ShortenResponse{}, fmt.Errorf("save url mapping: %w", err)
 	}
+
+	return ShortenResponse{ShortURL: short}, nil
 }
 
 func (s *Service) Resolve(ctx context.Context, short string) (ResolveResponse, error) {
@@ -72,13 +64,8 @@ func (s *Service) Resolve(ctx context.Context, short string) (ResolveResponse, e
 	return ResolveResponse{OriginalURL: mapping.OriginalURL}, nil
 }
 
-func (s *Service) generateShort(rawURL string, attempt int) string {
-	input := rawURL
-	if attempt > 0 {
-		input = fmt.Sprintf("%s#%d", rawURL, attempt)
-	}
-
-	hash := sha256.Sum256([]byte(input))
+func (s *Service) generateShort(rawURL string) string {
+	hash := sha256.Sum256([]byte(rawURL))
 
 	return s.encoding.EncodeToString(hash[:8])
 }
