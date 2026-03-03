@@ -4,6 +4,7 @@ package e2e_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -20,13 +21,45 @@ func baseURL() string {
 	return "http://localhost:8081"
 }
 
+func post(t *testing.T, url string, body []byte) *http.Response {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(
+		context.Background(),
+		http.MethodPost,
+		url,
+		bytes.NewReader(body),
+	)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	return resp
+}
+
+func get(t *testing.T, url string) *http.Response {
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	require.NoError(t, err)
+
+	client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error {
+		return http.ErrUseLastResponse
+	}}
+
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	return resp
+}
+
 func TestShorten_Success(t *testing.T) {
 	t.Parallel()
 
 	body, _ := json.Marshal(map[string]string{"url": "https://example.com"})
-	resp, err := http.Post(baseURL()+"/", "application/json", bytes.NewReader(body)) //nolint:noctx
-
-	require.NoError(t, err)
+	resp := post(t, baseURL()+"/", body)
 
 	defer resp.Body.Close()
 
@@ -42,19 +75,13 @@ func TestShorten_Idempotent(t *testing.T) {
 
 	body, _ := json.Marshal(map[string]string{"url": "https://idempotent-test.com"})
 
-	resp1, err := http.Post(baseURL()+"/", "application/json", bytes.NewReader(body)) //nolint:noctx
-	require.NoError(t, err)
-
+	resp1 := post(t, baseURL()+"/", body)
 	defer resp1.Body.Close()
 
 	var result1 map[string]string
 	require.NoError(t, json.NewDecoder(resp1.Body).Decode(&result1))
 
-	body, _ = json.Marshal(map[string]string{"url": "https://idempotent-test.com"})
-
-	resp2, err := http.Post(baseURL()+"/", "application/json", bytes.NewReader(body)) //nolint:noctx
-	require.NoError(t, err)
-
+	resp2 := post(t, baseURL()+"/", body)
 	defer resp2.Body.Close()
 
 	var result2 map[string]string
@@ -68,21 +95,13 @@ func TestResolve_Success(t *testing.T) {
 
 	body, _ := json.Marshal(map[string]string{"url": "https://resolve-test.com"})
 
-	shortenResp, err := http.Post(
-		baseURL()+"/",
-		"application/json",
-		bytes.NewReader(body),
-	) //nolint:noctx
-	require.NoError(t, err)
-
+	shortenResp := post(t, baseURL()+"/", body)
 	defer shortenResp.Body.Close()
 
 	var shortened map[string]string
 	require.NoError(t, json.NewDecoder(shortenResp.Body).Decode(&shortened))
 
-	resolveResp, err := http.Get(baseURL() + "/" + shortened["shortUrl"]) //nolint:noctx
-	require.NoError(t, err)
-
+	resolveResp := get(t, baseURL()+"/"+shortened["shortUrl"])
 	defer resolveResp.Body.Close()
 
 	require.Equal(t, http.StatusOK, resolveResp.StatusCode)
@@ -95,9 +114,7 @@ func TestResolve_Success(t *testing.T) {
 func TestResolve_NotFound(t *testing.T) {
 	t.Parallel()
 
-	resp, err := http.Get(baseURL() + "/notexists1") //nolint:noctx
-	require.NoError(t, err)
-
+	resp := get(t, baseURL()+"/notexists1")
 	defer resp.Body.Close()
 
 	require.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -108,9 +125,7 @@ func TestShorten_InvalidURL(t *testing.T) {
 
 	body, _ := json.Marshal(map[string]string{"url": "not-a-url"})
 
-	resp, err := http.Post(baseURL()+"/", "application/json", bytes.NewReader(body)) //nolint:noctx
-	require.NoError(t, err)
-
+	resp := post(t, baseURL()+"/", body)
 	defer resp.Body.Close()
 
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -121,9 +136,7 @@ func TestShorten_EmptyURL(t *testing.T) {
 
 	body, _ := json.Marshal(map[string]string{"url": ""})
 
-	resp, err := http.Post(baseURL()+"/", "application/json", bytes.NewReader(body)) //nolint:noctx
-	require.NoError(t, err)
-
+	resp := post(t, baseURL()+"/", body)
 	defer resp.Body.Close()
 
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -134,9 +147,7 @@ func TestShorten_InvalidScheme(t *testing.T) {
 
 	body, _ := json.Marshal(map[string]string{"url": "ht://example.com"})
 
-	resp, err := http.Post(baseURL()+"/", "application/json", bytes.NewReader(body)) //nolint:noctx
-	require.NoError(t, err)
-
+	resp := post(t, baseURL()+"/", body)
 	defer resp.Body.Close()
 
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
