@@ -3,7 +3,19 @@ name: Check-Correctness
 on:
   push:
     branches: [main]
+    paths:
+      - '**/*.go'
+      - '**/*.sql'
+      - '.golangci.yaml'
+      - 'go.mod'
+      - 'go.sum'
   pull_request:
+    paths:
+      - '**/*.go'
+      - '**/*.sql'
+      - '.golangci.yaml'
+      - 'go.mod'
+      - 'go.sum'
 
 permissions:
   contents: read
