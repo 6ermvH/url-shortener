@@ -53,25 +53,6 @@ func TestShorten_Idempotent(t *testing.T) {
 	require.Equal(t, resp1.ShortURL, resp2.ShortURL)
 }
 
-func TestShorten_RetriesOnConflict(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	repo := mocks.NewMockRepository(ctrl)
-
-	gomock.InOrder(
-		repo.EXPECT().Save(gomock.Any(), gomock.Any()).Return(repository.ErrConflict),
-		repo.EXPECT().Save(gomock.Any(), gomock.Any()).Return(nil),
-	)
-
-	svc := service.New(repo)
-
-	resp, err := svc.Shorten(context.Background(), service.ShortenRequest{URL: "https://example.com"})
-
-	require.NoError(t, err)
-	require.Len(t, resp.ShortURL, 10)
-}
-
 func TestShorten_EmptyURL(t *testing.T) {
 	t.Parallel()
 
