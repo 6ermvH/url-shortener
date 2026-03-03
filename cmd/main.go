@@ -49,7 +49,6 @@ func run() error {
 
 	const readHeaderTimeout = 5 * time.Second
 
-	//nolint:exhaustruct
 	server := &http.Server{
 		Addr:              cfg.Addr,
 		Handler:           mux,
@@ -80,7 +79,7 @@ func newRepository(cfg *config.Config) (repository.Repository, error) {
 			return nil, fmt.Errorf("ping db: %w", pingErr)
 		}
 
-		migrateErr := migrator.Run(sqlDB)
+		migrateErr := migrator.Run(sqlDB, cfg.MigrateVersion)
 		if migrateErr != nil {
 			return nil, fmt.Errorf("run migrations: %w", migrateErr)
 		}
