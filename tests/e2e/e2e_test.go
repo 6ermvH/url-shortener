@@ -4,7 +4,6 @@ package e2e_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -25,7 +24,7 @@ func post(t *testing.T, url string, body []byte) *http.Response {
 	t.Helper()
 
 	req, err := http.NewRequestWithContext(
-		context.Background(),
+		t.Context(),
 		http.MethodPost,
 		url,
 		bytes.NewReader(body),
@@ -42,7 +41,7 @@ func post(t *testing.T, url string, body []byte) *http.Response {
 func get(t *testing.T, url string) *http.Response {
 	t.Helper()
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
 	require.NoError(t, err)
 
 	client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error {
