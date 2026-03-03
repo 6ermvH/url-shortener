@@ -7,10 +7,7 @@ import (
 	"errors"
 )
 
-var (
-	ErrNotFound = errors.New("url not found")
-	ErrConflict = errors.New("short url already taken")
-)
+var ErrNotFound = errors.New("url not found")
 
 type Repository interface {
 	GetByShort(ctx context.Context, short string) (URLMapping, error)

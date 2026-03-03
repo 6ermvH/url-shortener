@@ -42,25 +42,9 @@ func (r *Repository) GetByShort(ctx context.Context, short string) (repository.U
 }
 
 func (r *Repository) Save(ctx context.Context, mapping repository.URLMapping) error {
-	result, err := r.db.ExecContext(ctx, querySave, mapping.ShortURL, mapping.OriginalURL)
+	_, err := r.db.ExecContext(ctx, querySave, mapping.ShortURL, mapping.OriginalURL)
 	if err != nil {
 		return fmt.Errorf("query save: %w", err)
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected: %w", err)
-	}
-
-	if rows == 0 {
-		existing, err := r.GetByShort(ctx, mapping.ShortURL)
-		if err != nil {
-			return fmt.Errorf("check conflict: %w", err)
-		}
-
-		if existing.OriginalURL != mapping.OriginalURL {
-			return repository.ErrConflict
-		}
 	}
 
 	return nil

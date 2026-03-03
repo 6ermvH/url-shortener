@@ -16,7 +16,6 @@ type Repository struct {
 
 func New() *Repository {
 	return &Repository{
-		mu:      sync.RWMutex{},
 		byShort: make(map[string]string),
 	}
 }
@@ -36,10 +35,6 @@ func (r *Repository) GetByShort(_ context.Context, short string) (repository.URL
 func (r *Repository) Save(_ context.Context, mapping repository.URLMapping) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-
-	if existing, ok := r.byShort[mapping.ShortURL]; ok && existing != mapping.OriginalURL {
-		return repository.ErrConflict
-	}
 
 	r.byShort[mapping.ShortURL] = mapping.OriginalURL
 
