@@ -13,6 +13,17 @@ linters:
     - wsl
     - nolintlint
 
+  settings:
+    varnamelen:
+      ignore-names:
+        - db
+        - w
+        - r
+        - m
+    exhaustruct:
+      include:
+        - 'github\.com/6ermvH/url-shortener\.'
+
   exclusions:
     generated: strict
     warn-unused: false
@@ -29,6 +40,7 @@ linters:
           - dupl
           - gosec
           - noinlineerr
+          - errchkjson
 
 formatters:
   enable:
