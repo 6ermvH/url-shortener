@@ -1,7 +1,6 @@
 package service_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -28,7 +27,7 @@ func TestShorten_Success(t *testing.T) {
 	svc := service.New(repo)
 
 	resp, err := svc.Shorten(
-		context.Background(),
+		t.Context(),
 		service.ShortenRequest{URL: "https://example.com"},
 	)
 
@@ -50,13 +49,13 @@ func TestShorten_Idempotent(t *testing.T) {
 	svc := service.New(repo)
 
 	resp1, err := svc.Shorten(
-		context.Background(),
+		t.Context(),
 		service.ShortenRequest{URL: "https://example.com"},
 	)
 	require.NoError(t, err)
 
 	resp2, err := svc.Shorten(
-		context.Background(),
+		t.Context(),
 		service.ShortenRequest{URL: "https://example.com"},
 	)
 	require.NoError(t, err)
@@ -69,7 +68,7 @@ func TestShorten_EmptyURL(t *testing.T) {
 
 	svc := service.New(nil)
 
-	_, err := svc.Shorten(context.Background(), service.ShortenRequest{URL: ""})
+	_, err := svc.Shorten(t.Context(), service.ShortenRequest{URL: ""})
 
 	require.ErrorIs(t, err, service.ErrEmptyURL)
 }
@@ -79,7 +78,7 @@ func TestShorten_InvalidURL(t *testing.T) {
 
 	svc := service.New(nil)
 
-	_, err := svc.Shorten(context.Background(), service.ShortenRequest{URL: "not-a-url"})
+	_, err := svc.Shorten(t.Context(), service.ShortenRequest{URL: "not-a-url"})
 
 	require.ErrorIs(t, err, service.ErrInvalidURL)
 }
@@ -89,7 +88,7 @@ func TestShorten_InvalidScheme(t *testing.T) {
 
 	svc := service.New(nil)
 
-	_, err := svc.Shorten(context.Background(), service.ShortenRequest{URL: "ht://example.com"})
+	_, err := svc.Shorten(t.Context(), service.ShortenRequest{URL: "ht://example.com"})
 
 	require.ErrorIs(t, err, service.ErrInvalidURL)
 }
@@ -107,7 +106,7 @@ func TestShorten_RepoError(t *testing.T) {
 
 	svc := service.New(repo)
 
-	_, err := svc.Shorten(context.Background(), service.ShortenRequest{URL: "https://example.com"})
+	_, err := svc.Shorten(t.Context(), service.ShortenRequest{URL: "https://example.com"})
 
 	require.ErrorIs(t, err, repoErr)
 }
@@ -124,7 +123,7 @@ func TestResolve_Success(t *testing.T) {
 
 	svc := service.New(repo)
 
-	resp, err := svc.Resolve(context.Background(), "abc123")
+	resp, err := svc.Resolve(t.Context(), "abc123")
 
 	require.NoError(t, err)
 	require.Equal(t, "https://example.com", resp.OriginalURL)
@@ -142,7 +141,7 @@ func TestResolve_NotFound(t *testing.T) {
 
 	svc := service.New(repo)
 
-	_, err := svc.Resolve(context.Background(), "notexists")
+	_, err := svc.Resolve(t.Context(), "notexists")
 
 	require.ErrorIs(t, err, service.ErrNotFound)
 }
@@ -160,7 +159,7 @@ func TestResolve_RepoError(t *testing.T) {
 
 	svc := service.New(repo)
 
-	_, err := svc.Resolve(context.Background(), "abc123")
+	_, err := svc.Resolve(t.Context(), "abc123")
 
 	require.ErrorIs(t, err, repoErr)
 }
