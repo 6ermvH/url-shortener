@@ -13,7 +13,7 @@ System_Boundary(system, "URL Shortener") {
     ContainerDb(memory, "In-Memory Storage", "Go map", "Альтернативное хранилище в памяти приложения")
 }
 
-Rel_R(user, api, "POST / — сокращение URL\nGET /{short} — получение оригинального URL", "HTTP/JSON")
+Rel_R(user, api, "POST / — сокращение URL. GET /{short} — получение оригинального URL", "HTTP/JSON")
 Rel_D(api, postgres, "Читает и записывает маппинг ссылок", "SQL")
 Rel_D(api, memory, "Читает и записывает маппинг ссылок", "Go API")
 
