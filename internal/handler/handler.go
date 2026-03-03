@@ -11,8 +11,8 @@ import (
 )
 
 type Service interface {
-	Shorten(ctx context.Context, req service.ShortenRequest) (service.ShortenResponse, error)
-	Resolve(ctx context.Context, short string) (service.ResolveResponse, error)
+	Shorten(ctx context.Context, input service.ShortenInput) (service.ShortenResult, error)
+	Resolve(ctx context.Context, short string) (service.ResolveResult, error)
 }
 
 type Handler struct {
@@ -24,7 +24,7 @@ func New(svc Service) *Handler {
 }
 
 func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
-	var req service.ShortenRequest
+	var req shortenRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -33,7 +33,7 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.svc.Shorten(r.Context(), req)
+	result, err := h.svc.Shorten(r.Context(), service.ShortenInput{URL: req.URL})
 	if errors.Is(err, service.ErrEmptyURL) || errors.Is(err, service.ErrInvalidURL) {
 		writeError(w, http.StatusBadRequest, err.Error())
 
@@ -46,13 +46,13 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, resp)
+	writeJSON(w, http.StatusCreated, shortenResponse{ShortURL: result.ShortURL})
 }
 
 func (h *Handler) Resolve(w http.ResponseWriter, r *http.Request) {
 	short := r.PathValue("short")
 
-	resp, err := h.svc.Resolve(r.Context(), short)
+	result, err := h.svc.Resolve(r.Context(), short)
 	if errors.Is(err, service.ErrNotFound) {
 		writeError(w, http.StatusNotFound, "url not found")
 
@@ -65,7 +65,7 @@ func (h *Handler) Resolve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, resp)
+	writeJSON(w, http.StatusOK, resolveResponse{OriginalURL: result.OriginalURL})
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -79,5 +79,5 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, map[string]string{"error": msg})
+	writeJSON(w, status, errorResponse{Error: msg})
 }
