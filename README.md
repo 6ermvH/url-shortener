@@ -5,7 +5,9 @@
 
 ## Архитектура
 
-Слои: `handler -> service -> repository`
+![C2 Диаграмма](docs/diagrams/C2.png)
+
+![C3 Диаграмма](docs/diagrams/C3.png)
 ## API
 
 **POST /**
