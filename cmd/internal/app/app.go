@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -35,8 +36,10 @@ func Run() error {
 		return fmt.Errorf("init repository: %w", err)
 	}
 
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 	svc := service.New(repo)
-	h := handler.New(svc)
+	h := handler.New(svc, logger)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /", h.Shorten)
@@ -48,7 +51,7 @@ func Run() error {
 		ReadHeaderTimeout: readHeaderTimeout,
 	}
 
-	log.Printf("starting server: addr=%s storage=%s", cfg.Addr, cfg.Storage)
+	logger.Info("starting server", "addr", cfg.Addr, "storage", cfg.Storage)
 
 	serveErr := server.ListenAndServe()
 	if serveErr != nil {
